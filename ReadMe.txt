@@ -1,3 +1,11 @@
+LoopyPageControl
+
+This application adds looping to the original PageControl example app from the iOS Developer Library (http://developer.apple.com/library/ios/#samplecode/PageControl/Introduction/Intro.html#//apple_ref/doc/uid/DTS40007795).
+In the iPhone version of the app, a UIScrollView is used to allow the user to swipe between pages. This update adds looping so that when the user reaches the last page, they are able to swipe past it to display the first page again. The loop also works in reverse so that the user can swipe backwards from the first page and instantly display the last page.
+The original example also includes iPad content to show how to segregate controllers and content for different devices - this is unchanged here.
+
+Here's the original ReadMe:
+
 PageControl
 
 This application primarily demonstrates use of UIScrollView's paging functionality to use horizontal scrolling as a mechanism for navigating between different pages of content.  With the iPad, this type of user interface is not really necessary since the screen is larger allowing for more content and detailed information.
