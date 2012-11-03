@@ -83,7 +83,7 @@ static NSString *ImageKey = @"imageKey";
     
     // a page is the width of the scroll view
     scrollView.pagingEnabled = YES;
-    scrollView.contentSize = CGSizeMake(scrollView.frame.size.width * kNumberOfPages, scrollView.frame.size.height);
+    scrollView.contentSize = CGSizeMake(scrollView.frame.size.width * (kNumberOfPages + 2), scrollView.frame.size.height);
     scrollView.showsHorizontalScrollIndicator = NO;
     scrollView.showsVerticalScrollIndicator = NO;
     scrollView.scrollsToTop = NO;
@@ -98,6 +98,13 @@ static NSString *ImageKey = @"imageKey";
     //
     [self loadScrollViewWithPage:0];
     [self loadScrollViewWithPage:1];
+    [self loadScrollViewWithPage:2];
+    
+    // update the scroll view to the appropriate page
+    CGRect frame = scrollView.frame;
+    frame.origin.x = frame.size.width;
+    frame.origin.y = 0;
+    [scrollView scrollRectToVisible:frame animated:NO];
 }
 
 - (void)dealloc
@@ -118,15 +125,29 @@ static NSString *ImageKey = @"imageKey";
 {
     if (page < 0)
         return;
-    if (page >= kNumberOfPages)
+    if (page >= kNumberOfPages + 2)
         return;
-    
+
+    NSUInteger controllerIndex;
     // replace the placeholder if necessary
-    MyViewController *controller = [viewControllers objectAtIndex:page];
+    if (page == 0)
+    {
+      controllerIndex = kNumberOfPages - 1; //last controller goes at page 0
+    }
+    else if (page == kNumberOfPages + 1)
+    {
+      controllerIndex = 0; // first controller goes on last page
+    }
+    else
+    {
+      controllerIndex = page - 1; // all others are bumped by 1
+    }
+
+    MyViewController *controller = [viewControllers objectAtIndex:controllerIndex];
     if ((NSNull *)controller == [NSNull null])
     {
-        controller = [[MyViewController alloc] initWithPageNumber:page];
-        [viewControllers replaceObjectAtIndex:page withObject:controller];
+        controller = [[MyViewController alloc] initWithPageNumber:controllerIndex];
+        [viewControllers replaceObjectAtIndex:controllerIndex withObject:controller];
         [controller release];
     }
     
@@ -139,9 +160,15 @@ static NSString *ImageKey = @"imageKey";
         controller.view.frame = frame;
         [scrollView addSubview:controller.view];
         
-        NSDictionary *numberItem = [self.contentList objectAtIndex:page];
+        NSDictionary *numberItem = [self.contentList objectAtIndex:controllerIndex];
         controller.numberImage.image = [UIImage imageNamed:[numberItem valueForKey:ImageKey]];
         controller.numberTitle.text = [numberItem valueForKey:NameKey];
+    } else if ( page <= 1 || page >= kNumberOfPages ) {
+      // move the controller's view to the correct page if it's a repeated one
+      CGRect frame = scrollView.frame;
+      frame.origin.x = frame.size.width * page;
+      frame.origin.y = 0;
+      controller.view.frame = frame;
     }
 }
 
@@ -159,7 +186,7 @@ static NSString *ImageKey = @"imageKey";
     // Switch the indicator when more than 50% of the previous/next page is visible
     CGFloat pageWidth = scrollView.frame.size.width;
     int page = floor((scrollView.contentOffset.x - pageWidth / 2) / pageWidth) + 1;
-    pageControl.currentPage = page;
+    pageControl.currentPage = page - 1;
     
     // load the visible page and the page on either side of it (to avoid flashes when the user starts scrolling)
     [self loadScrollViewWithPage:page - 1];
@@ -179,11 +206,20 @@ static NSString *ImageKey = @"imageKey";
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
 {
     pageControlUsed = NO;
+   
+    CGFloat pageWidth = self.scrollView.frame.size.width;
+    int page = floor((self.scrollView.contentOffset.x - pageWidth / 2) / pageWidth) + 1;
+
+    if(page==0){
+        self.scrollView.contentOffset = CGPointMake(pageWidth*(kNumberOfPages), 0);
+    } else if(page==kNumberOfPages+1){
+        self.scrollView.contentOffset = CGPointMake(pageWidth, 0);
+    }
 }
 
 - (IBAction)changePage:(id)sender
 {
-    int page = pageControl.currentPage;
+    int page = pageControl.currentPage+1;
 	
     // load the visible page and the page on either side of it (to avoid flashes when the user starts scrolling)
     [self loadScrollViewWithPage:page - 1];
